@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# holdingsite — create minimal holding site
+# Usage: holdingsite foldername
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $(basename "$0") FOLDER_NAME" >&2
+    exit 1
+fi
+
+DIR="$1"
+
+# Create the folder (will be the web root)
+mkdir -p "$DIR" || { echo "Failed to create directory"; exit 1; }
+mkdir -p "$DIR/public" 
+# index.php — simple placeholder page (this file will be served directly)
+cat > "$DIR/public/index.php" << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holding Site</title>
+    <style>
+        body { 
+            font-family: Arial, Helvetica, sans-serif; 
+            background: #0d1117; 
+            color: #c9d1d9; 
+            text-align: center; 
+            padding: 60px 20px; 
+            margin: 0;
+            line-height: 1.6;
+        }
+        h1 { 
+            color: #58a6ff; 
+            margin-bottom: 0.4em;
+        }
+        .box { 
+            max-width: 620px; 
+            margin: 40px auto; 
+            padding: 35px; 
+            background: #161b22; 
+            border: 1px solid #30363d; 
+            border-radius: 8px;
+        }
+        .date {
+            margin-top: 2.5rem;
+            opacity: 0.65;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Website Coming Soon</h1>
+        <p>This site is currently under construction.</p>
+        <p>We'll be back online shortly with something better.</p>
+        
+        <p class="date">
+            Placeholder created <?= date('Y-m-d') ?><br>
+            via holdingsite script
+        </p>
+    </div>
+</body>
+</html>
+EOF
+
+echo "Created holding site in: $DIR/public/"
+echo "  └── index.php    → main holding page (this folder is the web root)"
+echo ""
+echo "Point your web server / virtual host document root directly to:"
+echo "    $DIR"
