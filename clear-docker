@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# clear-docker
+# Aggressive cleanup of Docker containers, images, and networks
+# Usage:
+#   clear-docker                # removes containers + images + networks + system prune
+#   clear-docker --volumes      # also removes all volumes (with confirmation!)
+
+set -euo pipefail
+
+echo "=== Docker Cleanup Script ==="
+echo
+
+# ────────────────────────────────────────────────
+# Helper: ask for confirmation
+# ────────────────────────────────────────────────
+confirm() {
+    local prompt="$1"
+    local default="${2:-n}"
+
+    if [[ "$default" == "y" ]]; then
+        read -p "$prompt [Y/n] " response
+        response=${response:-y}
+    else
+        read -p "$prompt [y/N] " response
+        response=${response:-n}
+    fi
+
+    case "$response" in
+        [Yy]* ) return 0 ;;
+        *     ) return 1 ;;
+    esac
+}
+
+# ────────────────────────────────────────────────
+# Main cleanup steps (always run these)
+# ────────────────────────────────────────────────
+
+echo "→ Stopping and removing ALL containers..."
+docker rm -f "$(docker ps -aq)" 2>/dev/null || true
+
+echo "→ Removing ALL images..."
+docker rmi -f "$(docker images -aq)" 2>/dev/null || true
+
+echo "→ Removing all user-created networks (keeping bridge, host, none)..."
+# shellcheck disable=SC2046
+docker network rm $(docker network ls -q | grep -vE '^(bridge|host|none)$') 2>/dev/null || true
+
+echo "→ Running system prune (dangling + unused)..."
+docker system prune -a -f --volumes=false
+
+# ────────────────────────────────────────────────
+# Optional: Volumes
+# ────────────────────────────────────────────────
+if [[ "${1:-}" == "--volumes" || "${1:-}" == "-v" ]]; then
+    echo
+    echo "💀  DANGER: This will DELETE ALL Docker volumes !!!"
+    echo "    (including database data, persistent files, etc.)"
+    echo
+
+    if confirm "Really remove ALL volumes? This cannot be undone." "n"; then
+        echo "→ Removing ALL volumes..."
+        docker volume rm -f "$(docker volume ls -q)" 2>/dev/null || true
+        echo "Volumes removed."
+    else
+        echo "Volumes cleanup skipped."
+    fi
+else
+    echo
+    echo "Tip: run 'clear-docker --volumes' to also remove all volumes (requires confirmation)"
+fi
+
+echo
+echo "=== Docker cleanup finished ==="
+docker system df
