@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# clone - smart git clone shortcut for your common namespaces
+# Usage examples:
+#   clone laminas/laminas-i18n
+#   clone -d form
+#   clone -b bone
+
+set -euo pipefail
+
+# Default namespace
+NAMESPACE=""
+
+while getopts ":db" opt; do
+  case $opt in
+    d) NAMESPACE="delboy1978uk" ;;
+    b) NAMESPACE="boneframework" ;;
+    \?) echo "Unknown option: -$OPTARG" >&2; exit 1 ;;
+  esac
+done
+
+# Remove the options we already processed
+shift $((OPTIND-1))
+
+# We need exactly one argument (the repo or owner/repo)
+if [ $# -ne 1 ]; then
+  echo "Usage:"
+  echo "  clone <vendor>/<repo>               e.g. laminas/laminas-i18n"
+  echo "  clone -d <repo>                     e.g. clone -d form"
+  echo "  clone -b <repo>                     e.g. clone -b bone"
+  exit 1
+fi
+
+ARG="$1"
+
+if [[ -n "$NAMESPACE" ]]; then
+  # -d or -b mode → argument is just the repo name
+  REPO="$ARG"
+  FULL_REPO="$NAMESPACE/$REPO"
+else
+  # default mode → expect owner/repo format
+  if [[ "$ARG" != */* ]]; then
+    echo "Error: When no -d/-b flag is used, please provide repo in format owner/repository"
+    echo "Got: $ARG"
+    exit 1
+  fi
+  FULL_REPO="$ARG"
+fi
+
+# Build the SSH URL
+URL="git@github.com:${FULL_REPO}.git"
+
+echo "Cloning: $URL"
+git clone "$URL"
