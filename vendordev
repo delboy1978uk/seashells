@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# File: vendordev
+# Usage: ./vendordev laravel/passport
+#        ./vendordev spatie/laravel-permission
+
+set -euo pipefail
+
+# ────────────────────────────────────────────────────────────────────────────────
+#  Configuration & checks
+# ────────────────────────────────────────────────────────────────────────────────
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $(basename "$0") vendor/package"
+    echo "   or: $(basename "$0") package-name-only   (when already inside the vendor folder)"
+    exit 1
+fi
+
+ARG="$1"
+
+# Allow both "spatie/laravel-permission" and just "laravel-permission" when cwd is already the vendor
+if [[ $ARG == */* ]]; then
+    FULL_NAME="$ARG"
+    VENDOR="${ARG%%/*}"
+    PACKAGE="${ARG#*/}"
+else
+    VENDOR=$(basename "$PWD")
+    PACKAGE="$ARG"
+    FULL_NAME="${VENDOR}/${PACKAGE}"
+fi
+
+# ────────────────────────────────────────────────────────────────────────────────
+#  Main logic
+# ────────────────────────────────────────────────────────────────────────────────
+
+echo "→ Cloning https://github.com/${FULL_NAME}.git → temp folder 'xxx' ..."
+
+if [[ -d xxx ]]; then
+    echo "Error: folder 'xxx' already exists in current directory."
+    echo "Please remove or rename it first."
+    exit 2
+fi
+
+git clone --quiet "https://github.com/${FULL_NAME}.git" xxx
+
+if [[ ! -d xxx ]]; then
+    echo "Error: cloning failed"
+    exit 3
+fi
+
+echo "→ Moving .git into ${PACKAGE}/"
+mkdir -p "${PACKAGE}"
+
+# Move .git (preserves history)
+mv xxx/.git "${PACKAGE}/.git" 2>/dev/null || true
+
+# Move everything else from xxx → package folder
+# (using ./* so we don't move the .git we already took)
+shopt -s dotglob
+mv xxx/* "${PACKAGE}/" 2>/dev/null || true
+mv xxx/.* "${PACKAGE}/" 2>/dev/null || true
+shopt -u dotglob
+
+# Clean up
+rm -rf xxx
+
+echo "Done."
+echo ""
+echo "Package is now in: ${PACKAGE}/"
+echo "with full git history preserved."
