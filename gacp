@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [ -z "$1" ]; then
+  echo 'usage: gcp [COMMIT_MESSAGE]'
+  echo '       (the message can contain spaces)'
+  exit 1
+fi
+
+git add .
+git commit -m "$*"   # this is the important change
+git push
