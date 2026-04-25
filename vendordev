@@ -40,7 +40,7 @@ if [[ -d xxx ]]; then
     exit 2
 fi
 
-git clone --quiet "https://github.com/${FULL_NAME}.git" xxx
+git clone --quiet "git@github.com/${FULL_NAME}.git" xxx
 
 if [[ ! -d xxx ]]; then
     echo "Error: cloning failed"
