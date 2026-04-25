@@ -1,0 +1,5 @@
+#! /binbash
+
+sudo chown -R delboy1978uk:staff .
+sudo chmod -R 775 .
+
